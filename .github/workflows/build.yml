@@ -22,9 +22,24 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
-      - name: Upload VST3
+      - name: Loop timing test
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Recurse build/HardInsertPortTest_artefacts -Filter HardInsertPortTest.exe | Select-Object -First 1
+          & $exe.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Collect plugins
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Recurse build/HardInsert_artefacts/Release/VST3/Hard-Insert.vst3 dist/
+          Copy-Item build/HardInsert_artefacts/Release/CLAP/Hard-Insert.clap dist/
+          Get-ChildItem -Recurse dist | Select-Object FullName
+
+      - name: Upload plugins
         uses: actions/upload-artifact@v4
         with:
-          name: Hard-Insert-VST3-windows
-          path: build/HardInsert_artefacts/Release/VST3/Hard-Insert.vst3
+          name: Hard-Insert-windows-x64
+          path: dist/
           if-no-files-found: error
